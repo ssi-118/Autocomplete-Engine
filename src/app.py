@@ -16,6 +16,18 @@ st.set_page_config(
 # Custom SaaS Style
 st.markdown("""
     <style>
+            .stApp {
+        background: #0f172a;
+        color: #f8fafc;
+    }
+
+    [data-testid="stHeader"] {
+        background: transparent;
+    }
+
+    [data-testid="stSidebar"] {
+        background: #111827;
+    }
     .block-container {
         padding-top: 3rem !important;
         max-width: 650px !important;
