@@ -233,19 +233,48 @@ selected_value = st_searchbox(
     style_overrides={
         "searchbox": {
             "control": {
-                "borderRadius": "12px",
-                "borderColor": "#cbd5e1",
-                "boxShadow": "0 10px 30px rgba(15, 23, 42, 0.08)",
-                "minHeight": "48px"
+                "backgroundColor": "#111827",
+                "borderColor": "#334155",
+                "borderRadius": "14px",
+                "boxShadow": "0 12px 30px rgba(0, 0, 0, 0.25)",
+                "minHeight": "58px",
+                "color": "#f8fafc",
+                "&:hover": {
+                    "borderColor": "#38bdf8",
+                }
+
+            },
+            "input": {
+                "color": "#f8fafc",
+            },
+            "singleValue": {
+                "color": "#f8fafc",
+            },
+            "placeholder": {
+                "color": "#94a3b8",
             },
             "menu": {
-                "borderRadius": "12px",
+                "backgroundColor": "#111827",
+                "border": "1px solid #334155",
+                "borderRadius": "14px",
                 "overflow": "hidden",
-                "boxShadow": "0 18px 40px rgba(15, 23, 42, 0.14)"
+                "boxShadow": "0 18px 45px rgba(0, 0, 0, 0.35)",
             },
             "option": {
-                "padding": "12px 14px"
-            }
+                "backgroundColor": "#111827",
+                "color": "#e5e7eb",
+                "padding": "12px 14px",
+            },
+            "noOptionsMessage": {
+                "color": "#94a3b8",
+                "backgroundColor": "#111827",
+            },
+            "dropdownIndicator": {
+                "color": "#94a3b8",
+            },
+            "indicatorSeparator": {
+                "backgroundColor": "#334155",
+            },
         }
     }
 )

@@ -141,4 +141,6 @@ autocomplete_lstm.pth
 This file is placed inside the `src` folder with `app.py`.
 
 ## Live Demo
-
+```
+https://autocomplete-engine-hxxfaivcdb8w56sts2vehs.streamlit.app/
+```
