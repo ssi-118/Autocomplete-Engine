@@ -13,6 +13,94 @@ st.set_page_config(
     layout="centered"
 )
 
+# CUSTOM CSS
+st.markdown("""
+<style>
+
+    /* App background */
+    .stApp {
+        background: #f8fafc;
+    }
+
+    /* Center everything */
+    .block-container {
+        max-width: 700px;
+        padding-top: 6rem;
+    }
+
+    /* Title */
+    h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    /* Subtitle */
+    .saas-subtitle {
+        text-align: center;
+        color: #64748b;
+        margin-bottom: 2.5rem;
+        font-size: 1.05rem;
+    }
+
+    /* Search container */
+    div[data-baseweb="select"] > div {
+        border-radius: 16px !important;
+        border: none !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+        padding: 6px !important;
+        transition: all 0.2s ease;
+    }
+
+    /* Focus effect */
+    div[data-baseweb="select"] > div:focus-within {
+        box-shadow: 0 0 0 2px #2563eb33, 0 12px 35px rgba(0,0,0,0.12) !important;
+    }
+
+    /* Input text */
+    div[data-baseweb="select"] input {
+        font-size: 16px !important;
+        padding: 8px !important;
+        color: #0f172a !important;
+    }
+
+    /* Dropdown */
+    div[data-baseweb="popover"] {
+        border-radius: 14px !important;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.12) !important;
+        overflow: hidden !important;
+    }
+
+    /* Options */
+    div[role="option"] {
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+    }
+
+    /* Hover */
+    div[role="option"]:hover {
+        background: #f1f5f9 !important;
+    }
+
+    /* Footer metrics */
+    [data-testid="stMetric"] {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    /* Divider */
+    hr {
+        margin-top: 3rem;
+        margin-bottom: 1.5rem;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
 # ---------------- MODEL PATH ----------------
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "autocomplete_lstm.pth"
@@ -159,14 +247,17 @@ def submit_searchbox_selection(selected_text):
 
 # ---------------- UI ----------------
 st.title("⚡ FlowType")
-st.caption("Next-gen text prediction powered by LSTM")
+st.markdown(
+    "<p class='saas-subtitle'>Next-gen text prediction powered by LSTM</p>",
+    unsafe_allow_html=True
+)
 
 model, checkpoint = load_model()
 
 selected_value = st_searchbox(
     search_suggestions,
     key="flowtype_searchbox",
-    placeholder="Type something... e.g., artificial intelligence",
+    placeholder="Ask anything or start typing...",
     default_searchterm=st.session_state.user_text,
     default=st.session_state.user_text,
     clear_on_submit=False,
@@ -183,11 +274,6 @@ st.divider()
 
 col1, col2, col3 = st.columns(3)
 
-with col1:
-    st.metric("Vocab Size", checkpoint.get("vocab_size", "N/A"))
-
-with col2:
-    st.metric("Latency", "~2ms")
-
-with col3:
-    st.metric("Context Depth", checkpoint.get("sequence_length", "N/A"))
+col1.metric("Vocabulary", checkpoint.get("vocab_size", "—"))
+col2.metric("Latency", "~2ms")
+col3.metric("Context", f"{checkpoint.get('sequence_length', '—')} words")
