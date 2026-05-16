@@ -6,88 +6,19 @@ from torch import nn
 from pathlib import Path
 from streamlit_searchbox import st_searchbox
 
-# 1. Premium Page Setup
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="FlowType // Autocomplete Engine",
+    page_title="FlowType",
     page_icon="⚡",
     layout="centered"
 )
 
-# Custom SaaS Style
-st.markdown("""
-    <style>
-            .stApp {
-        background: #0f172a;
-        color: #f8fafc;
-    }
-
-    [data-testid="stHeader"] {
-        background: transparent;
-    }
-
-    [data-testid="stSidebar"] {
-        background: #111827;
-    }
-    .block-container {
-        padding-top: 3rem !important;
-        max-width: 650px !important;
-    }
-
-    .saas-subtitle {
-        color: #94a3b8;
-        font-size: 1.1rem;
-        margin-top: -1rem;
-        margin-bottom: 2.5rem;
-    }
-
-    div[data-testid="stMetric"] {
-        background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
-        border: 1px solid rgba(56, 189, 248, 0.35);
-        border-radius: 14px;
-        padding: 1.1rem 1.2rem;
-        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.28);
-    }
-
-    div[data-testid="stMetric"] label {
-        color: #93c5fd !important;
-        font-weight: 600 !important;
-    }
-
-    div[data-testid="stMetricValue"] {
-        color: #f8fafc !important;
-    }
-
-    div[data-testid="stMetric"] svg {
-        display: none;
-    }
-    /* Remove white focus ring from searchbox */
-    div[data-baseweb="select"] > div {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Remove inner white highlight */
-    div[data-baseweb="select"] *:focus {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Fix dropdown input white background flash */
-    input {
-        background-color: transparent !important;
-    }
-
-    hr {
-        border-color: rgba(148, 163, 184, 0.25);
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-
+# ---------------- MODEL PATH ----------------
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "autocomplete_lstm.pth"
 
 
+# ---------------- MODEL ----------------
 class LSTMModel(nn.Module):
     def __init__(self, vocab_size, embedding_dim=128, lstm_size=128, num_layers=2):
         super().__init__()
@@ -108,27 +39,29 @@ class LSTMModel(nn.Module):
         return logits, hidden
 
 
+# ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_model():
-    # Defensive checkpoint loading
     if not MODEL_PATH.exists():
-        st.error(f"Model file missing at: {MODEL_PATH}. Please place your file in the directory.")
+        st.error(f"Model file missing at: {MODEL_PATH}")
         st.stop()
-        
+
     checkpoint = torch.load(MODEL_PATH, map_location="cpu")
+
     model = LSTMModel(
         vocab_size=checkpoint["vocab_size"],
         embedding_dim=checkpoint["embedding_dim"],
         lstm_size=checkpoint["lstm_size"],
         num_layers=checkpoint["num_layers"]
     )
+
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
+
     return model, checkpoint
 
 
-# --- Core Logic Functions ---
-
+# ---------------- TEXT HELPERS ----------------
 def get_current_word(text):
     match = re.search(r"([A-Za-z]+)$", text)
     return match.group(1) if match else ""
@@ -152,8 +85,10 @@ def get_prefix_suggestions(text, unique_words, limit=5):
         if word.startswith(prefix) and word != prefix:
             completed_text = replace_current_word(text, word)
             suggestions.append(completed_text)
+
         if len(suggestions) >= limit:
             break
+
     return suggestions
 
 
@@ -168,6 +103,7 @@ def predict_next_words(model, text, checkpoint, top_k=5):
 
     words = words[-sequence_length:]
     indexes = [word_to_index.get(word, word_to_index["<UNK>"]) for word in words]
+
     input_tensor = torch.tensor([indexes], dtype=torch.long)
 
     with torch.no_grad():
@@ -180,36 +116,22 @@ def predict_next_words(model, text, checkpoint, top_k=5):
     for index in top_indexes:
         next_word = index_to_word[index]
         if next_word != "<UNK>":
-            # Strip trailing space and append elegantly
             suggestions.append(text.rstrip() + " " + next_word)
+
     return suggestions
 
 
-# --- State Management & Callbacks ---
-
+# ---------------- SESSION STATE ----------------
 if "user_text" not in st.session_state:
     st.session_state.user_text = ""
 
-def commit_suggestion(selected_text):
-    """Callback function that cleanly updates state and appends trailing padding."""
-    st.session_state.user_text = selected_text + " "
 
-
-# --- Main Application Interface ---
-
-st.title("⚡ FlowType")
-st.markdown("<p class='saas-subtitle'>Next-gen text prediction pipeline powered by custom LSTM architectures.</p>", unsafe_allow_html=True)
-
-model, checkpoint = load_model()
-
-# Outer container that groups the input box and suggestions into one seamless SaaS visual module
+# ---------------- SEARCH LOGIC ----------------
 def search_suggestions(searchterm: str):
     st.session_state.user_text = searchterm
 
     if not searchterm.strip():
         return []
-
-    suggestions = []
 
     current_word = get_current_word(searchterm)
 
@@ -219,8 +141,7 @@ def search_suggestions(searchterm: str):
             unique_words=checkpoint["unique_words"],
             limit=5
         )
-
-    if not suggestions:
+    else:
         suggestions = predict_next_words(
             model=model,
             text=searchterm,
@@ -236,81 +157,37 @@ def submit_searchbox_selection(selected_text):
         st.session_state.user_text = selected_text + " "
 
 
+# ---------------- UI ----------------
+st.title("⚡ FlowType")
+st.caption("Next-gen text prediction powered by LSTM")
+
+model, checkpoint = load_model()
+
 selected_value = st_searchbox(
     search_suggestions,
     key="flowtype_searchbox",
-    placeholder="Type something... e.g., artificial intell",
+    placeholder="Type something... e.g., artificial intelligence",
     default_searchterm=st.session_state.user_text,
     default=st.session_state.user_text,
     clear_on_submit=False,
     edit_after_submit="option",
     submit_function=submit_searchbox_selection,
-    debounce=150,
-    style_overrides={
-        "searchbox": {
-            "control": {
-                "backgroundColor": "#111827",
-                "borderColor": "#334155",
-                "borderRadius": "14px",
-                "boxShadow": "none",  
-                "minHeight": "58px",
-                "color": "#f8fafc",
-                "outline": "none",  
-                "border": "1px solid #334155",
-                "&:hover": {
-                    "borderColor": "#38bdf8",
-                },
-                "&:focus": {
-                    "borderColor": "#38bdf8",
-                    "boxShadow": "none",
-                    "outline": "none",
-                }
-            },
-            "input": {
-                "color": "#f8fafc",
-            },
-            "singleValue": {
-                "color": "#f8fafc",
-            },
-            "placeholder": {
-                "color": "#94a3b8",
-            },
-            "menu": {
-                "backgroundColor": "#111827",
-                "border": "1px solid #334155",
-                "borderRadius": "14px",
-                "overflow": "hidden",
-                "boxShadow": "0 18px 45px rgba(0, 0, 0, 0.35)",
-            },
-            "option": {
-                "backgroundColor": "#111827",
-                "color": "#e5e7eb",
-                "padding": "12px 14px",
-            },
-            "noOptionsMessage": {
-                "color": "#94a3b8",
-                "backgroundColor": "#111827",
-            },
-            "dropdownIndicator": {
-                "color": "#94a3b8",
-            },
-            "indicatorSeparator": {
-                "backgroundColor": "#334155",
-            },
-        }
-    }
 )
-
 
 if selected_value:
     st.session_state.user_text = selected_value + " "
 
-# Decorative Metric Footer
-st.markdown("---")
+
+# ---------------- FOOTER ----------------
+st.divider()
+
 col1, col2, col3 = st.columns(3)
+
 with col1:
-    st.metric(label="Vocab Size", value=f"{checkpoint.get('vocab_size', 'N/A')}")
+    st.metric("Vocab Size", checkpoint.get("vocab_size", "N/A"))
+
 with col2:
-    st.metric(label="LSTM Latency", value="~2ms")
+    st.metric("Latency", "~2ms")
+
 with col3:
-    st.metric(label="Context Depth", value=f"{checkpoint.get('sequence_length', 'N/A')} words")
+    st.metric("Context Depth", checkpoint.get("sequence_length", "N/A"))
