@@ -60,6 +60,22 @@ st.markdown("""
     div[data-testid="stMetric"] svg {
         display: none;
     }
+    /* Remove white focus ring from searchbox */
+    div[data-baseweb="select"] > div {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Remove inner white highlight */
+    div[data-baseweb="select"] *:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Fix dropdown input white background flash */
+    input {
+        background-color: transparent !important;
+    }
 
     hr {
         border-color: rgba(148, 163, 184, 0.25);
@@ -236,13 +252,19 @@ selected_value = st_searchbox(
                 "backgroundColor": "#111827",
                 "borderColor": "#334155",
                 "borderRadius": "14px",
-                "boxShadow": "0 12px 30px rgba(0, 0, 0, 0.25)",
+                "boxShadow": "none",  
                 "minHeight": "58px",
                 "color": "#f8fafc",
+                "outline": "none",  
+                "border": "1px solid #334155",
                 "&:hover": {
                     "borderColor": "#38bdf8",
+                },
+                "&:focus": {
+                    "borderColor": "#38bdf8",
+                    "boxShadow": "none",
+                    "outline": "none",
                 }
-
             },
             "input": {
                 "color": "#f8fafc",
